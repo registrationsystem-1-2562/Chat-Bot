@@ -5,6 +5,12 @@
 const functions = require('firebase-functions');
 const {WebhookClient} = require('dialogflow-fulfillment');
 const {Card, Suggestion} = require('dialogflow-fulfillment');
+
+const admin = require('firebase-admin');
+admin.initializeApp({
+  credential: admin.credential.applicationDefault(),
+  databaseURL: 'https://cpe-projectregbot-bumgbp.firebaseio.com'
+});
  
 process.env.DEBUG = 'dialogflow:debug'; // enables lib debugging statements
  
@@ -12,7 +18,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
   const agent = new WebhookClient({ request, response });
   console.log('Dialogflow Request headers: ' + JSON.stringify(request.headers));
   console.log('Dialogflow Request body: ' + JSON.stringify(request.body));
- 
+  
   function welcome(agent) {
     agent.add(`Welcome to my agent!`);
   }
@@ -21,17 +27,19 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
     agent.add(`I didn't understand`);
     agent.add(`I'm sorry, can you try again?`);
   }
-
+  // //
   function identification(agent) {
     let StringID = request.body.queryResult.parameters.StringID;
     let NumberID = request.body.queryResult.parameters.NumberID;
-    let result = 'เวงกำ';
-    
-    if(StringID == 'B'){
-    result = 'รหัสของนักศึกษานะจ้ะ';
-    }
-    agent.add(result);
+    var ID = StringID+NumberID;
+    let a1 = 'firstname';
+
+   	return admin.database().ref("student/"+ID).child(a1).once('value').then(snapshot => {
+   	agent.add(snapshot.val());
+	});
   }
+  
+  
   // // Uncomment and edit to make your own intent handler
   // // uncomment `intentMap.set('your intent name here', yourFunctionHandler);`
   // // below to get this function to be run when a Dialogflow intent is matched
