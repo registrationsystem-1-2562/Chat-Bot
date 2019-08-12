@@ -3,7 +3,7 @@
 'use strict';
  
 const functions = require('firebase-functions');
-const {WebhookClient} = require('dialogflow-fulfillment');
+const {WebhookClient,Payload} = require('dialogflow-fulfillment');
 const {Card, Suggestion} = require('dialogflow-fulfillment');
 
 const admin = require('firebase-admin');
@@ -32,11 +32,16 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
     let StringID = request.body.queryResult.parameters.StringID;
     let NumberID = request.body.queryResult.parameters.NumberID;
     var ID = StringID+NumberID;
-    let a1 = 'firstname';
 
-   	return admin.database().ref("student/"+ID).child(a1).once('value').then(snapshot => {
-   	agent.add(snapshot.val());
-	});
+   	return admin.database().ref("student/"+ID).once('value').then(snapshot => {
+   	agent.add("ชื่อ " + snapshot.val().prefix + snapshot.val().firstname + "  " + snapshot.val().lastname + "\n" + "gpax : " + snapshot.val().gpax + " " + "ปีการศึกษา " +  snapshot.val().year );
+	agent.add(sendAsPayload({
+    "type": "image",
+    "originalContentUrl": snapshot.val().image,
+    "previewImageUrl": snapshot.val().image,
+    "animated": false
+  		}));
+    });
   }
   
   
@@ -79,3 +84,6 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
   // intentMap.set('your intent name here', googleAssistantHandler);
   agent.handleRequest(intentMap);
 });
+const sendAsPayload = (json) => {
+  return new Payload(`LINE`, json, { sendAsMessage: true });
+};
