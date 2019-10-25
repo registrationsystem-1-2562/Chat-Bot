@@ -56,6 +56,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
       let e = '';
       let h = '';
       let j = [];
+      let l = '';
       return admin.database().ref("teacher").once('value').then(snapshot => {
         for(let k in snapshot.val()){
           j.push(
@@ -68,9 +69,9 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
         console.log(" ++ " + JSON.stringify(j));
 
         return admin.database().ref(Name+"/"+ID).once('value').then(snapshot => {
-          a +=  "ชื่อ " + snapshot.val().prefix + snapshot.val().firstname + "  " + snapshot.val().lastname + "\n" + "gpax : " + snapshot.val().gpax + " " + "ปีการศึกษา " +  snapshot.val().year+ "\n";
+          a +=  "ชื่อ " + snapshot.val().prefix + snapshot.val().firstname + "  " + snapshot.val().lastname + "\n" + "gpax : " + snapshot.val().gpax + " " + "\nปีการศึกษา " +  snapshot.val().year;
           b +=  snapshot.val().image;
-        
+    
           c +=  snapshot.val().year;
           return admin.database().ref("lecturer_register/"+c).child(ID).once('value').then(snapshot => {
             //console.log(a);
@@ -79,18 +80,36 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
               for(let i in j){
                 //console.log(snapshot.val().teacher[z]);
                 if(snapshot.val().teacher[z] == j[i].key){
-                  h += j[i].prefix+j[i].firstname+" "+j[i].lastname+"\n"
+                  h += "\n"+j[i].prefix+j[i].firstname+" "+j[i].lastname
                 }
               }
             }
-            console.log(" -- "+h);
-            agent.add( a+"เวลาที่ลงวิชาโปรเจค: "+ snapshot.val().date + "\nที่ได้ลงทะเบียนกับอาจารย์:\n "+h);
+            l += "\n"+j[0].prefix+j[0].firstname+" "+j[0].lastname
+            //console.log(" -- "+h);
+           // return admin.database().ref("result_register/"+c).once('value').then(snapshot => {
+
+              agent.add(a);
+              agent.add(sendAsPayload({
+              "type": "image",
+              "originalContentUrl": b,
+              "previewImageUrl": b,
+              "animated": false
+              })); 
+              agent.add("เวลาที่ลงวิชาโปรเจค: "+ snapshot.val().date);
+              agent.add("ลงทะเบียนกับอาจารย์:"+h);
+              agent.add("ผลลัพธ์การลงทะเบียน:"+l);
+            //});
+            /*
+            agent.add(a);
+            agent.add("เวลาที่ลงวิชาโปรเจค: "+ snapshot.val().date);
+            agent.add("ลงทะเบียนกับอาจารย์:"+h);
             agent.add(sendAsPayload({
             "type": "image",
             "originalContentUrl": b,
             "previewImageUrl": b,
             "animated": false
               })); 
+            */
             /*
             for(let i in snapshot.val().teacher){
               h += await admin.database().ref("teacher/"+snapshot.val().teacher[i]).once('value').then(snapshot => {
@@ -198,7 +217,10 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
    	 return admin.database().ref("teacher").child(ID).once('value').then(snapshot => {
      //console.log(c);
      //console.log("1111111");
-     agent.add("ชื่อ " + snapshot.val().prefix + snapshot.val().firstname + "  " + snapshot.val().lastname +"\nProject:\n "+a+"\nProfessional:\n "+b+"\nemail:\n "+d);
+     agent.add("ชื่อ " + snapshot.val().prefix + snapshot.val().firstname + "  " + snapshot.val().lastname );
+     agent.add("Project: "+a);
+     agent.add("Professional: "+b);
+     agent.add("email: "+d);
      agent.add(sendAsPayload({
      "type": "image",
      "originalContentUrl": c,
@@ -266,13 +288,16 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
     console.log("ครู0 "+e[f]);
     return admin.database().ref("teacher/"+e[f]).once('value').then(snapshot => {
         g += "ชื่อ " + snapshot.val().prefix + snapshot.val().firstname + "  " + snapshot.val().lastname;
-        agent.add("ประกาศข่าวล่าสุด: "+a[f]+"\nเนื้อหา: "+c[f]+"\nเวลาที่ประกาศ: "+d[f]+"\nโดย "+g);
+        agent.add("ประกาศข่าวล่าสุด: "+a[f]);
         agent.add(sendAsPayload({
-        "type": "image",
-        "originalContentUrl": b[f],
-        "previewImageUrl": b[f],
-        "animated": false
-         }));      
+          "type": "image",
+          "originalContentUrl": b[f],
+          "previewImageUrl": b[f],
+          "animated": false
+           })); 
+        agent.add("เนื้อหา: "+c[f]);
+        agent.add("เวลาที่ประกาศ: "+d[f]);
+        agent.add("โดย: "+g);     
         });//return
     //console.log(Object.keys(c).length-1);
     //console.log(" --- "+ c[4]);
@@ -389,11 +414,11 @@ exports.scheduledFunction = functions.pubsub.schedule("0 * */6 * *").timeZone('A
         //console.log(c[Number(Object.keys(c).length-1)]);
         return admin.database().ref("teacher/"+c4[Number(Object.keys(c).length-1)]).once('value').then(snapshot => {
           g += snapshot.val().prefix + snapshot.val().firstname + "  " + snapshot.val().lastname;
-          console.log(" --- "+ g);
+          //console.log(" --- "+ g);
           if(d > x){
-             console.log("XX2 = "+c[Number(Object.keys(c).length-1)]);
+             //console.log("XX2 = "+c[Number(Object.keys(c).length-1)]);
             // broadcast(`ประกาศข่าว\n${c[Number(Object.keys(c).length-1)]}`);
-            //flexbroadcast(c[Number(Object.keys(c).length-1)],c1[Number(Object.keys(c).length-1)],c2[Number(Object.keys(c).length-1)],c3[Number(Object.keys(c).length-1)],g);
+            flexbroadcast(c[Number(Object.keys(c).length-1)],c1[Number(Object.keys(c).length-1)],c2[Number(Object.keys(c).length-1)],c3[Number(Object.keys(c).length-1)],g);
           }
           admin.database().ref("total_notice").update({ab: d});
           //flexbroadcast(c[Number(Object.keys(c).length-1)],c1[Number(Object.keys(c).length-1)],c2[Number(Object.keys(c).length-1)],c3[Number(Object.keys(c).length-1)],g);
